@@ -7,6 +7,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
@@ -18,6 +19,10 @@ public class MyMusicService {
 
     public MyMusicService (){
         mm = MyMusicImpl.getInstance();
+        /*mm.addUser("u1", "Anton");
+        try{
+        mm.addPlaylist("p1", "Playlist1", "u1");}
+        catch(Exception e){}*/
     }
 
     @POST
@@ -47,59 +52,58 @@ public class MyMusicService {
     @GET
     @ApiOperation(value = "Get singer list", notes = "asdasd")
     @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Successful", response = List.class, responseContainer = "List")
+            @ApiResponse(code = 201, message = "Successful", response = Singer.class, responseContainer = "List")
     })
     @Path("/listSingers")
     @Produces(MediaType.APPLICATION_JSON)
     public Response listSingers() {
         List<Singer> list = mm.listSingers();
-        return Response.status(201).entity(list).build()  ;
+        GenericEntity<List<Singer>> entity = new GenericEntity<List<Singer>>(list) {};
+
+        return Response.status(201).entity(entity).build()  ;
     }
 
     @POST
-    @ApiOperation(value = "add a playlist to a user", notes = "Response: OK-> playlist, User not found -> user")
+    @ApiOperation(value = "add a playlist to a user", notes = "asdasd")
     @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Successful", response = IdNameTO.class),
-            @ApiResponse(code = 404, message = "User not found", response = IdNameTO.class)
+            @ApiResponse(code = 201, message = "Successful", response = PlaylistTO.class),
+            @ApiResponse(code = 404, message = "User not found", response = PlaylistTO.class)
     })
-    @Path("/addPlaylist/")
+    @Path("/addPlaylist")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response addPlaylist(String userId, IdNameTO playlist) {
+    public Response addPlaylist(PlaylistTO playlist) {
         try{
-            mm.addPlaylist(playlist.id, playlist.name, userId);
+            mm.addPlaylist(playlist.playlistId, playlist.name, playlist.userId);
             return Response.status(201).entity(playlist).build()  ;
         }
         catch(UserNotFoundException e) {
-            IdNameTO res = new IdNameTO();
-            res.id = userId;
-            res.name = null;
-            return Response.status(404).entity(res).build()  ;
+            return Response.status(404).entity(playlist).build()  ;
         }
     }
 
     @POST
     @ApiOperation(value = "add a track to a playlist", notes = "asdasd")
     @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Successful", response = IdNameTO.class),
+            @ApiResponse(code = 201, message = "Successful", response = TrackTO.class),
             @ApiResponse(code = 404, message = "User not found", response = IdNameTO.class),
             @ApiResponse(code = 404, message = "Playlist not found", response = IdNameTO.class)
     })
-    @Path("/addTrack/")
+    @Path("/addTrack")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response addPlaylist(String userId, String playlistId, Track track) {
+    public Response addTrack(TrackTO track) {
         try{
-            mm.addTrack(track.getId(), track.getTitle(), track.getSingerId(), track.getAlbum(), track.getLength(), playlistId, userId);
+            mm.addTrack(track.track.getId(), track.track.getTitle(), track.track.getSingerId(), track.track.getAlbum(), track.track.getLength(), track.playlistId, track.userId);
             return Response.status(201).entity(track).build()  ;
         }
         catch (UserNotFoundException e) {
             IdNameTO res = new IdNameTO();
-            res.id = userId;
+            res.id = track.userId;
             res.name = null;
             return Response.status(404).entity(res).build()  ;
         }
         catch (PlaylistNotFoundException e) {
             IdNameTO res = new IdNameTO();
-            res.id = playlistId;
+            res.id = track.playlistId;
             res.name = null;
             return Response.status(404).entity(res).build()  ;
         }
@@ -108,15 +112,18 @@ public class MyMusicService {
     @GET
     @ApiOperation(value = "Get all tracks from a playlist", notes = "asdasd")
     @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Successful", response = List.class, responseContainer = "List"),
+            @ApiResponse(code = 201, message = "Successful", response = Track.class, responseContainer = "List"),
             @ApiResponse(code = 404, message = "User not found", response = IdNameTO.class),
             @ApiResponse(code = 404, message = "Playlist not found", response = IdNameTO.class)
     })
-    @Path("/getTracks/")
+    @Path("/getTracks/{userId}/{playlistId}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response addTracks(String userId, String playlistId) {
+    public Response getTracks(@PathParam("userId") String userId, @PathParam("playlistId") String playlistId) {
         try{
-            return Response.status(201).entity(mm.listTracks(userId, playlistId)).build()  ;
+            List<Track> tracks = mm.listTracks(userId, playlistId);
+            GenericEntity<List<Track>> entity = new GenericEntity<List<Track>>(tracks) {};
+
+            return Response.status(201).entity(entity).build()  ;
         }
         catch (UserNotFoundException e) {
             IdNameTO res = new IdNameTO();

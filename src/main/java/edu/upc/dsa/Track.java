@@ -36,5 +36,9 @@ public class Track {
         return album;
     }
 
+    @Override
+    public String toString() {
+        return "Track [id="+id+", title=" + title + ", singer=" + singerId + ", album=" + album + ", length=" + length +"]";
+    }
 
 }
